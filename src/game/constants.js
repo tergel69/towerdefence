@@ -2713,6 +2713,8 @@ export function getTowersForWorld(worldId, unlockedTowers = []) {
     case 'cosmic':
       available.push('plasma', 'voidEye', 'starForge');
       break;
+    default:
+      break;
   }
   
   // Add support towers (always available after unlocking)
@@ -3598,56 +3600,6 @@ function offsetWaypoints(waypoints, dx = 0, dy = 0) {
   return waypoints.map(([c, r]) => [c + dx, r + dy]);
 }
 
-function makeWorldLevels({
-  worldId,
-  titlePrefix,
-  intro,
-  enemyPool,
-  towerUnlocks,
-  theme,
-  pathVariants,
-}) {
-  const levelNames = [
-    'Arrival',
-    'Outpost',
-    'Hidden Trail',
-    'Forked Path',
-    'Forward Camp',
-    'Deep Wilds',
-    'Pressure Point',
-    'Night Watch',
-    'Siege Line',
-    'Elders Rise',
-    'Final Gate',
-    'World Trial',
-  ];
-
-  return levelNames.map((name, index) => {
-    const pathVariant = pathVariants[index % pathVariants.length];
-    return {
-      id: `${worldId}-level-${index + 1}`,
-      worldId,
-      levelNumber: index + 1,
-      title: `${titlePrefix} ${name}`,
-      intro: index === 0 ? intro : `Campaign pressure rises in ${titlePrefix.toLowerCase()}.`,
-      theme,
-      enemyPool,
-      towerUnlocks,
-      pathVariant: pathVariant.id,
-      waypoints: pathVariant.waypoints,
-      hpMultiplier: Number((1 + index * 0.14).toFixed(2)),
-      speedMultiplier: Number((1 + index * 0.05).toFixed(2)),
-      goldReward: 100 + index * 35,
-      targetWaves: Math.min(5 + Math.floor(index / 2), 10),
-      stars: [
-        { stars: 1, label: 'Clear', condition: 'complete' },
-        { stars: 2, label: 'Efficient', condition: 'bonus' },
-        { stars: 3, label: 'Perfect', condition: 'perfect' },
-      ],
-    };
-  });
-}
-
 export const WORLD_ORDER = ['forest', 'desert', 'ice', 'volcanic', 'cosmic'];
 
 export const WORLD_DEFS = {
@@ -3806,56 +3758,6 @@ export function getLevel(worldId, levelNum) {
 // â”€â”€ World Progression â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function offsetWaypoints(waypoints, dx = 0, dy = 0) {
   return waypoints.map(([c, r]) => [c + dx, r + dy]);
-}
-
-function makeWorldLevels({
-  worldId,
-  titlePrefix,
-  intro,
-  enemyPool,
-  towerUnlocks,
-  theme,
-  pathVariants,
-}) {
-  const levelNames = [
-    'Arrival',
-    'Outpost',
-    'Hidden Trail',
-    'Forked Path',
-    'Forward Camp',
-    'Deep Wilds',
-    'Pressure Point',
-    'Night Watch',
-    'Siege Line',
-    'Elders Rise',
-    'Final Gate',
-    'World Trial',
-  ];
-
-  return levelNames.map((name, index) => {
-    const pathVariant = pathVariants[index % pathVariants.length];
-    return {
-      id: `${worldId}-level-${index + 1}`,
-      worldId,
-      levelNumber: index + 1,
-      title: `${titlePrefix} ${name}`,
-      intro: index === 0 ? intro : `Campaign pressure rises in ${titlePrefix.toLowerCase()}.`,
-      theme,
-      enemyPool,
-      towerUnlocks,
-      pathVariant: pathVariant.id,
-      waypoints: pathVariant.waypoints,
-      hpMultiplier: Number((1 + index * 0.14).toFixed(2)),
-      speedMultiplier: Number((1 + index * 0.05).toFixed(2)),
-      goldReward: 100 + index * 35,
-      targetWaves: Math.min(5 + Math.floor(index / 2), 10),
-      stars: [
-        { stars: 1, label: 'Clear', condition: 'complete' },
-        { stars: 2, label: 'Efficient', condition: 'bonus' },
-        { stars: 3, label: 'Perfect', condition: 'perfect' },
-      ],
-    };
-  });
 }
 
 export const WORLD_ORDER = ['forest', 'desert', 'ice', 'volcanic', 'cosmic'];

@@ -15,22 +15,11 @@ import {
   generateWave,
   WORLDS,
   LEVELS,
-  getWorldLevels,
-  WORLD_STORIES,
-  SCREEN_STATE,
-  TOWER_CATEGORIES,
-  isCategoryUnlocked,
-  getUnlockedTowers,
   getUnlockedCategories,
-  ENEMY_CATEGORIES,
-  isEnemyCategoryUnlocked,
-  getUnlockedEnemies,
-  ENEMY_SCALING,
   calculateEnemyStats,
   initRandomPathForGame,
   resetDefaultPathForGame,
   setPathForGame,
-  getTowerUpgradeStats,
 } from "./constants";
 
 import { useCanvas } from "./hooks/useCanvas";
@@ -63,14 +52,11 @@ import {
   clearSavedGame,
   saveSettings,
   loadProgression,
-  saveProgression,
   getWorldsWithStatus,
   getLevelsWithStatus,
   isWorldUnlocked,
   isLevelUnlocked,
   completeLevel,
-  resetProgression,
-  checkNewWorldUnlocked,
 } from "./system/saveSystem";
 import {
   initAudio,
@@ -87,7 +73,6 @@ import TowerUpgradePanel from "./components/TowerUpgradePanel";
 import WavePreview from "./components/WavePreview";
 import TowerTooltip from "./components/TowerTooltip";
 import AchievementPopup from "./components/AchievementPopup";
-import TowerCardPanel from "./components/TowerCardPanel";
 import SettingsModal from "./components/SettingsModal";
 import MainMenu from "./components/MainMenu";
 import TutorialOverlay from "./components/TutorialOverlay";
@@ -318,9 +303,7 @@ export default function TowerDefenseGame() {
   const [worldsData, setWorldsData] = useState<any[]>([]);
   const [levelsData, setLevelsData] = useState<any[]>([]);
   // Progression state for tower/enemy unlocks
-  const [progression, setProgression] = useState<any>(() => loadProgression());
-  const [showWorldStory, setShowWorldStory] = useState(false);
-  const [currentStory, setCurrentStory] = useState<any>(null);
+  const [progression] = useState<any>(() => loadProgression());
 
   // 🔧 FIX: Load settings on mount
   useEffect(() => {
@@ -487,13 +470,6 @@ export default function TowerDefenseGame() {
     syncUi();
     saveProgress();
   }, [gameMode, saveProgress, selectedLevel, selectedWorld, syncUi]);
-
-  const spawnEnemy = useCallback((type: string, hpScale: number, speedScale = 1) => {
-    const enemy = createEnemy(type, hpScale, speedScale);
-    enemy.id = uid();
-    enemy.spawnTime = performance.now() / 1000;
-    stateRef.current.enemies.push(enemy);
-  }, []);
 
   const update = useCallback(
     (dt: number) => {
@@ -691,7 +667,7 @@ export default function TowerDefenseGame() {
       updateParticles(s.particles, dt);
       syncUi();
     },
-    [gameState, spawnEnemy, settings.autoStartWaves, persistentStats, commitSessionStats, syncPersistentStats, startWave, syncUi, saveProgress, selectedLevel, selectedWorld, gameMode]
+    [gameState, settings.autoStartWaves, persistentStats, commitSessionStats, syncPersistentStats, startWave, syncUi, saveProgress, selectedLevel, selectedWorld, gameMode]
   );
 
   const render = useCallback(() => {
@@ -955,11 +931,6 @@ export default function TowerDefenseGame() {
     } as any);
   }, [handleCanvasMouseMove]);
 
-  // Get unlocked tower IDs based on progression
-  const unlockedTowerIds = useMemo(() => {
-    return getUnlockedTowers(progression);
-  }, [progression]);
-
   // Group tower buttons by category
   const towerButtons = useMemo(() => {
     const categories = getUnlockedCategories(progression);
@@ -1174,16 +1145,11 @@ export default function TowerDefenseGame() {
       setGameState('playing');
       startMusic('action');
     }
-  }, [selectedWorld]);
+  }, [restartGame, selectedWorld]);
 
   const handleBackToWorlds = useCallback(() => {
     setSelectedWorld(null);
     setGameState('worldSelect');
-  }, []);
-
-  const handleBackToLevels = useCallback(() => {
-    setSelectedLevel(null);
-    setGameState('levelSelect');
   }, []);
 
   const handleSkipWave = useCallback(() => {
@@ -1206,12 +1172,6 @@ export default function TowerDefenseGame() {
     saveProgress();
     syncUi();
   }, [saveProgress, startWave, syncPersistentStats, syncUi]);
-
-  const handleStoryComplete = useCallback(() => {
-    setShowWorldStory(false);
-    setCurrentStory(null);
-    handleEnterWorldSelect();
-  }, [handleEnterWorldSelect]);
 
   const handleTutorialComplete = useCallback(() => {
     console.log('✅ Tutorial complete');

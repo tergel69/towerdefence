@@ -242,7 +242,6 @@ function drawEnemies(ctx, enemies) {
     const SPAWN_DURATION = 300;
     const spawnProgress = Math.min(timeSinceSpawn / SPAWN_DURATION, 1);
     const spawnScale = easeOutBack(spawnProgress);
-    const spawnAlpha = spawnProgress;
     
     // Death animation (shrink and fade)
     const DEATH_DURATION = 400;
@@ -256,14 +255,10 @@ function drawEnemies(ctx, enemies) {
     const BOB_FREQUENCY = speed > 2 ? 8 : 5;
     const bobOffset = Math.sin(now / 1000 * BOB_FREQUENCY * Math.PI * 2) * BOB_AMOUNT;
     
-    // Tank enemy waddle (slight rotation)
-    const WADDLE_ANGLE = speed < 1.5 ? Math.sin(now / 1000 * 3 * Math.PI * 2) * 0.1 : 0;
-    
     // Apply animations to position
     let drawX = x;
     let drawY = y + bobOffset;
     let drawSize = size * spawnScale * (isDying ? deathScale : 1);
-    let drawAlpha = spawnAlpha * (isDying ? deathAlpha : 1);
     
     // Skip if still spawning or fully dead
     if (spawnProgress < 1) {

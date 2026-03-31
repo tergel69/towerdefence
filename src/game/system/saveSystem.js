@@ -941,7 +941,7 @@ export function purchaseCosmetic(category, itemId, currentGold) {
 }
 
 // Default export
-export default {
+const saveSystem = {
   saveSettings,
   loadSettings,
   saveGameState,
@@ -969,3 +969,5 @@ export default {
   getLevelsWithStatus,
   checkNewWorldUnlocked,
 };
+
+export default saveSystem;

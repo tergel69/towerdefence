@@ -17,9 +17,6 @@ let _sfxVolume = 0.8;
 let _currentMusic = null;
 let _musicGain = null;
 
-// Sound effect buffers cache
-const _sfxBuffers = {};
-
 // ── Initialization ───────────────────────────────────────────
 /**
  * Initialize the audio context. Call on first user interaction.
@@ -395,8 +392,6 @@ export function stopMusic() {
 function createMusicLoop(type) {
   // Simple bass drone + rhythm pattern
   const now = _audioCtx.currentTime;
-  const bpm = type === 'action' ? 140 : 90;
-  const beatDuration = 60 / bpm;
   
   // Master gain for music
   const musicMaster = _audioCtx.createGain();
@@ -456,7 +451,7 @@ export function createScreenShake(intensity = 10, duration = 0.2) {
 }
 
 // Export singleton-like API
-export default {
+const audioSystem = {
   initAudio,
   resumeAudio,
   setMasterVolume,
@@ -470,3 +465,5 @@ export default {
   stopMusic,
   createScreenShake,
 };
+
+export default audioSystem;
