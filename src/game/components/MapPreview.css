@@ -1,0 +1,255 @@
+.campaign-map-selector {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.campaign-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.campaign-header h2 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.campaign-header p {
+  color: #9ca3af;
+}
+
+.maps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.map-card {
+  background: rgba(30, 30, 40, 0.9);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.map-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+.map-card:focus-within {
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.25), 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.map-card-header {
+  padding: 16px;
+  border-bottom: 3px solid;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.map-card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.map-difficulty {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.map-preview-container {
+  position: relative;
+  padding: 12px;
+  background: #0a0a0f;
+}
+
+.path-canvas {
+  display: block;
+  border-radius: 8px;
+  width: 100%;
+  height: auto;
+}
+
+.path-info-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.path-type {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9ca3af;
+}
+
+.map-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.strategy-hints {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.strategy-hints h4 {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.strategy-hints ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 0.8rem;
+  color: #d1d5db;
+  line-height: 1.6;
+}
+
+.tower-recommendations {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tower-recommendations h4 {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.tower-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tower-tag {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.level-select {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.level-select h4 {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
+  gap: 6px;
+}
+
+.level-btn {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 6px;
+  background: #374151;
+  color: #e5e7eb;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.level-btn:hover:not(:disabled) {
+  background: #4b5563;
+  transform: scale(1.05);
+}
+
+.level-btn:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.65);
+  outline-offset: 2px;
+}
+
+.level-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.level-btn.completed {
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid #22c55e;
+}
+
+.level-btn .stars {
+  font-size: 0.6rem;
+  margin-top: 2px;
+}
+
+/* Side by side comparison mode */
+.maps-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.map-card.compare-mode {
+  transform: scale(0.95);
+}
+
+.map-card.compare-mode:hover {
+  transform: scale(0.98);
+}
+
+@media (max-width: 720px) {
+  .campaign-map-selector {
+    padding: 12px;
+  }
+
+  .maps-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .map-card {
+    border-radius: 16px;
+  }
+
+  .map-preview-container {
+    padding: 10px;
+  }
+
+  .level-grid {
+    grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
+  }
+}
