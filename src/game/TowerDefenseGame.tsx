@@ -1509,26 +1509,26 @@ export default function TowerDefenseGame() {
 
   // Commander ability handler (wired to UI when CommanderAbilityBar is added)
   /* eslint-disable no-unused-vars */
-  const _handleCommanderAbility = useCallback((abilityId: string) => {
-    const s = stateRef.current;
-    const commander = commanderRef.current;
-    const wave = s.wave;
-    const abilityDef = COMMANDER_ABILITIES[abilityId as keyof typeof COMMANDER_ABILITIES];
-    if (!abilityDef || wave < abilityDef.unlockWave) return;
+  // const _handleCommanderAbility = useCallback((abilityId: string) => {
+  //   const s = stateRef.current;
+  //   const commander = commanderRef.current;
+  //   const wave = s.wave;
+  //   const abilityDef = COMMANDER_ABILITIES[abilityId as keyof typeof COMMANDER_ABILITIES];
+  //   if (!abilityDef || wave < abilityDef.unlockWave) return;
 
-    const result = activateAbility(commander, abilityId, s, s.particles);
-    if (result.success) {
-      triggerShake(
-        shakeStackRef.current,
-        SHAKE_PRESETS.commanderAbility.intensity,
-        SHAKE_PRESETS.commanderAbility.duration
-      );
-      if (abilityId === 'airstrike' || abilityId === 'nuke') {
-        slowMoRef.current = { remaining: 0.5, factor: 0.3 };
-      }
-    }
-    setKillFeedTick((t) => t + 1);
-  }, []);
+  //   const result = activateAbility(commander, abilityId, s, s.particles);
+  //   if (result.success) {
+  //     triggerShake(
+  //       shakeStackRef.current,
+  //       SHAKE_PRESETS.commanderAbility.intensity,
+  //       SHAKE_PRESETS.commanderAbility.duration
+  //     );
+  //     if (abilityId === 'airstrike' || abilityId === 'nuke') {
+  //       slowMoRef.current = { remaining: 0.5, factor: 0.3 };
+  //     }
+  //   }
+  //   setKillFeedTick((t) => t + 1);
+  // }, []);
   /* eslint-enable no-unused-vars */
 
   const handleUpgrade = useCallback(
