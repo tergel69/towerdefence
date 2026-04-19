@@ -1,2 +1,10 @@
 import TowerDefenseGame from './game/TowerDefenseGame';
-export default function App() { return <TowerDefenseGame />; }
+import ErrorBoundary from './game/components/ErrorBoundary';
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <TowerDefenseGame />
+    </ErrorBoundary>
+  );
+}

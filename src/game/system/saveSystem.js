@@ -26,7 +26,8 @@ const DEFAULT_SETTINGS = {
   tutorialCompleted: false,
   // Accessibility settings
   reducedMotion: false,
-  colorblindMode: 'none', // 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia'
+  colorblindMode: false,
+  highContrast: false,
   textSize: 'medium', // 'small' | 'medium' | 'large'
 };
 
@@ -132,7 +133,7 @@ const ACHIEVEMENTS_LIST = {
     reward: 1000,
     condition: (stats) => stats.gamesWonNoDamage >= 1,
   },
-  
+
   // ── NEW: Wave Milestones ─
   wave25: {
     id: 'wave25',
@@ -150,7 +151,7 @@ const ACHIEVEMENTS_LIST = {
     reward: 500,
     condition: (stats) => stats.highestWave >= 50,
   },
-  
+
   // ── NEW: Combat Achievements ─
   no_damage_10_waves: {
     id: 'no_damage_10_waves',
@@ -176,7 +177,7 @@ const ACHIEVEMENTS_LIST = {
     reward: 200,
     condition: (stats) => stats.bossKillsWithOneLife >= 1,
   },
-  
+
   // ── NEW: Economy Achievements ─
   rich_5000: {
     id: 'rich_5000',
@@ -194,7 +195,7 @@ const ACHIEVEMENTS_LIST = {
     reward: 300,
     condition: (stats) => stats.wavesWithoutSelling >= 20,
   },
-  
+
   // ── NEW: Tower Achievements ─
   max_level_5: {
     id: 'max_level_5',
@@ -212,7 +213,7 @@ const ACHIEVEMENTS_LIST = {
     reward: 150,
     condition: (stats) => stats.maxTowersPlaced >= 10,
   },
-  
+
   // ── NEW: Special Enemy Achievements ─
   kill_brute: {
     id: 'kill_brute',
@@ -246,7 +247,7 @@ const ACHIEVEMENTS_LIST = {
     reward: 150,
     condition: (stats) => (stats.specialEnemiesKilled?.necromancer || 0) >= 1,
   },
-  
+
   // ── NEW: World Completion ─
   complete_forest: {
     id: 'complete_forest',
@@ -294,9 +295,7 @@ const ACHIEVEMENTS_LIST = {
 export function saveSettings(settings) {
   try {
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-  } catch (e) {
-    console.warn('Failed to save settings:', e);
-  }
+  } catch (e) {}
 }
 
 export function loadSettings() {
@@ -305,9 +304,7 @@ export function loadSettings() {
     if (stored) {
       return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
     }
-  } catch (e) {
-    console.warn('Failed to load settings:', e);
-  }
+  } catch (e) {}
   return { ...DEFAULT_SETTINGS };
 }
 
@@ -325,7 +322,7 @@ export function saveGameState(state) {
       selectedWorld: state.selectedWorld || null,
       selectedLevel: state.selectedLevel ?? null,
       gameMode: state.gameMode || 'campaign',
-      towers: state.towers.map(t => ({
+      towers: state.towers.map((t) => ({
         id: t.id,
         defId: t.defId,
         col: t.col,
@@ -341,7 +338,6 @@ export function saveGameState(state) {
     localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(saveable));
     return true;
   } catch (e) {
-    console.warn('Failed to save game:', e);
     return false;
   }
 }
@@ -351,7 +347,7 @@ export function loadGameState() {
     const stored = localStorage.getItem(STORAGE_KEYS.GAME_STATE);
     if (stored) {
       const state = JSON.parse(stored);
-      
+
       // Check if save is valid (not too old, game was in progress)
       if (state.savedAt && Date.now() - state.savedAt < 24 * 60 * 60 * 1000) {
         if (!state.selectedTower) state.selectedTower = 'basic';
@@ -361,9 +357,7 @@ export function loadGameState() {
         return state;
       }
     }
-  } catch (e) {
-    console.warn('Failed to load game:', e);
-  }
+  } catch (e) {}
   return null;
 }
 
@@ -375,9 +369,7 @@ export function clearSavedGame() {
 export function saveStats(stats) {
   try {
     localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(stats));
-  } catch (e) {
-    console.warn('Failed to save stats:', e);
-  }
+  } catch (e) {}
 }
 
 export function loadStats() {
@@ -386,9 +378,7 @@ export function loadStats() {
     if (stored) {
       return { ...DEFAULT_STATS, ...JSON.parse(stored) };
     }
-  } catch (e) {
-    console.warn('Failed to load stats:', e);
-  }
+  } catch (e) {}
   return { ...DEFAULT_STATS };
 }
 
@@ -417,10 +407,8 @@ export function getAchievements() {
       }
       return achievements;
     }
-  } catch (e) {
-    console.warn('Failed to load achievements:', e);
-  }
-  
+  } catch (e) {}
+
   // Initialize with all achievements as unlocked: false
   const achievements = {};
   for (const [key, ach] of Object.entries(ACHIEVEMENTS_LIST)) {
@@ -438,39 +426,36 @@ export function checkAndUnlockAchievements(stats, currentGold) {
   const achievements = getAchievements();
   let newUnlock = false;
   let totalReward = 0;
-  
+
   for (const [key, ach] of Object.entries(achievements)) {
     if (!ach.unlocked && ACHIEVEMENTS_LIST[key].condition(stats)) {
       achievements[key].unlocked = true;
       achievements[key].unlockedAt = Date.now();
       totalReward += ach.reward;
       newUnlock = true;
+      // eslint-disable-next-line no-console
       console.log(`🎉 Achievement Unlocked: ${ach.name}!`);
     }
   }
-  
+
   if (newUnlock) {
     try {
       localStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
-    } catch (e) {
-      console.warn('Failed to save achievements:', e);
-    }
+    } catch (e) {}
   }
-  
+
   return { achievements, reward: totalReward };
 }
 
 export function claimAchievementReward(achievementId) {
   const achievements = getAchievements();
   const ach = achievements[achievementId];
-  
+
   if (ach && ach.unlocked && !ach.claimed) {
     achievements[achievementId].claimed = true;
     try {
       localStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
-    } catch (e) {
-      console.warn('Failed to save achievement claim:', e);
-    }
+    } catch (e) {}
     return ACHIEVEMENTS_LIST[achievementId].reward;
   }
   return 0;
@@ -490,35 +475,35 @@ function getDefaultProgress() {
     unlockedTowers: ['basic', 'splash', 'ice', 'sniper', 'poison'],
     totalStars: 0,
     lastUpdated: Date.now(),
-    
+
     // ── NEW: Meta-Upgrades (Persistent Bonuses) ─
     metaUpgrades: {
       // Gold bonus at game start
       startingGold: {
-        level1: false,  // +50 gold
-        level2: false,  // +100 gold (total)
-        level3: false,  // +200 gold (total)
+        level1: false, // +50 gold
+        level2: false, // +100 gold (total)
+        level3: false, // +200 gold (total)
       },
       // Lives bonus at game start
       startingLives: {
-        level1: false,  // +5 lives
-        level2: false,  // +10 lives (total)
+        level1: false, // +5 lives
+        level2: false, // +10 lives (total)
       },
       // Tower discount
       towerDiscount: {
-        level1: false,  // 5% discount
-        level2: false,   // 10% discount
-        level3: false,  // 15% discount
+        level1: false, // 5% discount
+        level2: false, // 10% discount
+        level3: false, // 15% discount
       },
       // Enemy gold bonus
       enemyReward: {
-        level1: false,  // +10% gold
-        level2: false,  // +20% gold
+        level1: false, // +10% gold
+        level2: false, // +20% gold
       },
       // Wave clear bonus
       waveBonus: {
-        level1: false,  // +20 gold per wave
-        level2: false,  // +40 gold per wave
+        level1: false, // +20 gold per wave
+        level2: false, // +40 gold per wave
       },
     },
     // ── NEW: Cosmetics unlocked
@@ -541,10 +526,10 @@ function getDefaultProgress() {
       },
     },
   };
-  
+
   // Initialize all levels with default values
   const worldOrder = ['forest', 'desert', 'ice', 'volcanic', 'cosmic'];
-  worldOrder.forEach(worldId => {
+  worldOrder.forEach((worldId) => {
     const world = WORLDS[worldId];
     if (world) {
       for (let i = 1; i <= world.levelCount; i++) {
@@ -557,20 +542,22 @@ function getDefaultProgress() {
       }
     }
   });
-  
+
   return progress;
 }
 
 // Save progression state
 export function saveProgression(progress) {
   try {
-    localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify({
-      ...progress,
-      lastUpdated: Date.now(),
-    }));
+    localStorage.setItem(
+      STORAGE_KEYS.PROGRESS,
+      JSON.stringify({
+        ...progress,
+        lastUpdated: Date.now(),
+      })
+    );
     return true;
   } catch (e) {
-    console.warn('Failed to save progression:', e);
     return false;
   }
 }
@@ -608,41 +595,39 @@ export function loadProgression() {
         cosmetics: mergedCosmetics,
       };
     }
-  } catch (e) {
-    console.warn('Failed to load progression:', e);
-  }
+  } catch (e) {}
   return getDefaultProgress();
 }
 
 // Check if a world is unlocked
 export function isWorldUnlocked(worldId, progression = null) {
   if (!progression) progression = loadProgression();
-  
+
   const world = WORLDS[worldId];
   if (!world) return false;
-  
+
   // First world is always unlocked
   if (!world.unlockRequirement) return true;
-  
+
   // Check if previous world requirement is met
   const { world: prevWorld, level } = world.unlockRequirement;
   const levelKey = `${prevWorld}_${level}`;
   const levelProgress = progression.levels[levelKey];
-  
+
   return levelProgress && levelProgress.completed;
 }
 
 // Check if a level is unlocked
 export function isLevelUnlocked(worldId, levelNum, progression = null) {
   if (!progression) progression = loadProgression();
-  
+
   // First level is always unlocked
   if (levelNum === 1) return true;
-  
+
   // Check if previous level is completed
   const prevLevelKey = `${worldId}_${levelNum - 1}`;
   const prevLevel = progression.levels[prevLevelKey];
-  
+
   return prevLevel && prevLevel.completed;
 }
 
@@ -654,11 +639,19 @@ export function getLevelProgress(worldId, levelNum, progression = null) {
 }
 
 // Complete a level and save progress
-export function completeLevel(worldId, levelNum, score, enemiesKilled, totalEnemies, towersBuilt, wave) {
+export function completeLevel(
+  worldId,
+  levelNum,
+  score,
+  enemiesKilled,
+  totalEnemies,
+  towersBuilt,
+  wave
+) {
   const progression = loadProgression();
   const levelKey = `${worldId}_${levelNum}`;
   const world = WORLDS[worldId];
-  
+
   // Calculate stars based on performance
   let stars = 0;
   if (totalEnemies > 0) {
@@ -667,7 +660,7 @@ export function completeLevel(worldId, levelNum, score, enemiesKilled, totalEnem
     else if (killRatio >= 0.75) stars = 2;
     else if (killRatio >= 0.5) stars = 1;
   }
-  
+
   // Update level progress
   const currentLevel = progression.levels[levelKey] || {};
   const newLevelProgress = {
@@ -677,12 +670,15 @@ export function completeLevel(worldId, levelNum, score, enemiesKilled, totalEnem
     attempts: (currentLevel.attempts || 0) + 1,
   };
   progression.levels[levelKey] = newLevelProgress;
-  progression.totalStars = Object.values(progression.levels).reduce((sum, lp) => sum + (lp.stars || 0), 0);
-  
+  progression.totalStars = Object.values(progression.levels).reduce(
+    (sum, lp) => sum + (lp.stars || 0),
+    0
+  );
+
   // Update current world if needed
   if (levelNum >= world.levelCount && !progression.completedWorlds.includes(worldId)) {
     progression.completedWorlds.push(worldId);
-    
+
     // Check for next world unlock
     const worldIndex = Object.keys(WORLDS).indexOf(worldId);
     const nextWorldId = Object.keys(WORLDS)[worldIndex + 1];
@@ -692,18 +688,18 @@ export function completeLevel(worldId, levelNum, score, enemiesKilled, totalEnem
   } else if (progression.currentWorld === worldId && levelNum < world.levelCount) {
     progression.currentWorld = worldId;
   }
-  
+
   // Unlock new towers based on level
   const level = getWorldLevels(worldId)?.[levelNum];
   if (level && level.availableTowers) {
-    level.availableTowers.forEach(towerId => {
+    level.availableTowers.forEach((towerId) => {
       const tower = getTowerDef(towerId);
       if (tower && !progression.unlockedTowers.includes(towerId)) {
         progression.unlockedTowers.push(towerId);
       }
     });
   }
-  
+
   saveProgression(progression);
   return { stars, levelProgress: newLevelProgress, progression };
 }
@@ -718,13 +714,13 @@ export function resetProgression() {
 // Get all worlds with their unlock status
 export function getWorldsWithStatus(progression = null) {
   if (!progression) progression = loadProgression();
-  
+
   const worldOrder = ['forest', 'desert', 'ice', 'volcanic', 'cosmic'];
-  return worldOrder.map(worldId => {
+  return worldOrder.map((worldId) => {
     const world = WORLDS[worldId];
     const unlocked = isWorldUnlocked(worldId, progression);
     const completed = progression.completedWorlds.includes(worldId);
-    
+
     // Calculate stars for this world
     let worldStars = 0;
     let levelsCompleted = 0;
@@ -733,7 +729,7 @@ export function getWorldsWithStatus(progression = null) {
       worldStars += levelProgress.stars || 0;
       if (levelProgress.completed) levelsCompleted++;
     }
-    
+
     return {
       ...world,
       unlocked,
@@ -748,16 +744,21 @@ export function getWorldsWithStatus(progression = null) {
 // Get levels for a specific world
 export function getLevelsWithStatus(worldId, progression = null) {
   if (!progression) progression = loadProgression();
-  
+
   const world = WORLDS[worldId];
   if (!world) return [];
-  
+
   const levels = [];
   for (let i = 1; i <= world.levelCount; i++) {
     const levelKey = `${worldId}_${i}`;
-    const levelProgress = progression.levels[levelKey] || { stars: 0, completed: false, highScore: 0, attempts: 0 };
+    const levelProgress = progression.levels[levelKey] || {
+      stars: 0,
+      completed: false,
+      highScore: 0,
+      attempts: 0,
+    };
     const unlocked = isLevelUnlocked(worldId, i, progression);
-    
+
     levels.push({
       level: i,
       unlocked,
@@ -767,7 +768,7 @@ export function getLevelsWithStatus(worldId, progression = null) {
       attempts: levelProgress.attempts || 0,
     });
   }
-  
+
   return levels;
 }
 
@@ -775,7 +776,7 @@ export function getLevelsWithStatus(worldId, progression = null) {
 export function checkNewWorldUnlocked(oldProgress, newProgress) {
   const oldCompleted = oldProgress?.completedWorlds || [];
   const newCompleted = newProgress?.completedWorlds || [];
-  
+
   for (const worldId of newCompleted) {
     if (!oldCompleted.includes(worldId)) {
       return worldId;
@@ -804,7 +805,6 @@ export function importAllData(data) {
     }
     return true;
   } catch (e) {
-    console.warn('Failed to import data:', e);
     return false;
   }
 }
@@ -815,6 +815,7 @@ export function clearAllData() {
   localStorage.removeItem(STORAGE_KEYS.SETTINGS);
   localStorage.removeItem(STORAGE_KEYS.STATS);
   localStorage.removeItem(STORAGE_KEYS.ACHIEVEMENTS);
+  // eslint-disable-next-line no-console
   console.log('All game data cleared');
 }
 
@@ -849,30 +850,19 @@ export const META_UPGRADE_COSTS = {
 export function getMetaUpgradeBonuses(progression = null) {
   if (!progression) progression = loadProgression();
   const meta = progression.metaUpgrades || {};
-  
+
   return {
-    startingGold: (
+    startingGold:
       (meta.startingGold?.level1 ? 50 : 0) +
       (meta.startingGold?.level2 ? 100 : 0) +
-      (meta.startingGold?.level3 ? 200 : 0)
-    ),
-    startingLives: (
-      (meta.startingLives?.level1 ? 5 : 0) +
-      (meta.startingLives?.level2 ? 10 : 0)
-    ),
-    towerDiscount: (
+      (meta.startingGold?.level3 ? 200 : 0),
+    startingLives: (meta.startingLives?.level1 ? 5 : 0) + (meta.startingLives?.level2 ? 10 : 0),
+    towerDiscount:
       (meta.towerDiscount?.level1 ? 5 : 0) +
       (meta.towerDiscount?.level2 ? 10 : 0) +
-      (meta.towerDiscount?.level3 ? 15 : 0)
-    ),
-    enemyReward: (
-      (meta.enemyReward?.level1 ? 10 : 0) +
-      (meta.enemyReward?.level2 ? 20 : 0)
-    ),
-    waveBonus: (
-      (meta.waveBonus?.level1 ? 20 : 0) +
-      (meta.waveBonus?.level2 ? 40 : 0)
-    ),
+      (meta.towerDiscount?.level3 ? 15 : 0),
+    enemyReward: (meta.enemyReward?.level1 ? 10 : 0) + (meta.enemyReward?.level2 ? 20 : 0),
+    waveBonus: (meta.waveBonus?.level1 ? 20 : 0) + (meta.waveBonus?.level2 ? 40 : 0),
   };
 }
 
@@ -880,20 +870,20 @@ export function getMetaUpgradeBonuses(progression = null) {
 export function purchaseMetaUpgrade(upgradeId, level, currentGold) {
   const costs = META_UPGRADE_COSTS[upgradeId];
   if (!costs || !costs[level]) return { success: false, reason: 'Invalid upgrade' };
-  
+
   const cost = costs[level].cost;
   if (currentGold < cost) return { success: false, reason: 'Not enough gold' };
-  
+
   const progression = loadProgression();
   if (progression.metaUpgrades?.[upgradeId]?.[level]) {
     return { success: false, reason: 'Already purchased' };
   }
-  
+
   // Mark as purchased
   if (!progression.metaUpgrades) progression.metaUpgrades = {};
   if (!progression.metaUpgrades[upgradeId]) progression.metaUpgrades[upgradeId] = {};
   progression.metaUpgrades[upgradeId][level] = true;
-  
+
   saveProgression(progression);
   return { success: true, cost };
 }
@@ -922,20 +912,20 @@ export const COSMETIC_COSTS = {
 export function purchaseCosmetic(category, itemId, currentGold) {
   const costs = COSMETIC_COSTS[category];
   if (!costs || !costs[itemId]) return { success: false, reason: 'Invalid cosmetic' };
-  
+
   const cost = costs[itemId].cost;
   if (currentGold < cost) return { success: false, reason: 'Not enough gold' };
-  
+
   const progression = loadProgression();
   if (progression.cosmetics?.[category]?.[itemId]) {
     return { success: false, reason: 'Already owned' };
   }
-  
+
   // Mark as owned
   if (!progression.cosmetics) progression.cosmetics = {};
   if (!progression.cosmetics[category]) progression.cosmetics[category] = {};
   progression.cosmetics[category][itemId] = true;
-  
+
   saveProgression(progression);
   return { success: true, cost };
 }

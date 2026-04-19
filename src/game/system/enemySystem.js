@@ -26,52 +26,52 @@ export function createEnemy(type, hpScale = 1, speedScale = 1) {
   const now = Date.now();
 
   return {
-    id:           _nextEnemyId++,
-    type:         def.id || type,
-    x:            start.x,
-    y:            start.y,
-    hp:           def.hp * hpScale,
-    maxHp:        def.hp * hpScale,
-    speed:        def.speed * speedScale,
-    baseSpeed:    def.speed * speedScale,  // store original speed for slow recovery
-    reward:       def.reward,
-    size:         def.size,
-    radius:       def.size,
-    color:        def.color,
-    damage:       def.damage,
-    waypointIdx:  1,          // heading toward waypoint index 1 initially
-    wpIndex:      1,
-    dead:         false,
-    reachedEnd:   false,
-    label:        def.label,
-    spawnTime:    now,        // Track spawn time for entrance animation
-    deathTime:    null,       // Track death time for death animation
-    
+    id: _nextEnemyId++,
+    type: def.id || type,
+    x: start.x,
+    y: start.y,
+    hp: def.hp * hpScale,
+    maxHp: def.hp * hpScale,
+    speed: def.speed * speedScale,
+    baseSpeed: def.speed * speedScale, // store original speed for slow recovery
+    reward: def.reward,
+    size: def.size,
+    radius: def.size,
+    color: def.color,
+    damage: def.damage,
+    waypointIdx: 1, // heading toward waypoint index 1 initially
+    wpIndex: 1,
+    dead: false,
+    reachedEnd: false,
+    label: def.label,
+    spawnTime: now, // Track spawn time for entrance animation
+    deathTime: null, // Track death time for death animation
+
     // Motion trail for fast enemies
     previousPositions: def.speed > 2.5 ? [] : null,
-    
+
     // Special ability properties
-    ability:      def.ability || null,
-    healAmount:   def.healAmount || 0,
-    healRadius:   def.healRadius || 0,
+    ability: def.ability || null,
+    healAmount: def.healAmount || 0,
+    healRadius: def.healRadius || 0,
     healInterval: def.healInterval || 0,
     healCooldown: 0,
     shieldThreshold: def.shieldThreshold || 0,
     damageReduction: def.damageReduction || 0,
-    isBoss:       def.isBoss || false,
-    
+    isBoss: def.isBoss || false,
+
     // ── NEW: Phase shift ability (Phase Runner) ─
     phaseDuration: def.phaseDuration || 0,
     phaseCooldown: def.phaseCooldown || 0,
     phaseTimer: 0,
     isPhased: false,
     phaseActiveTimer: 0,
-    
+
     // ── NEW: Teleport ability (Phantom) ─
     teleportInterval: def.teleportInterval || 0,
     teleportDistance: def.teleportDistance || 0,
     teleportTimer: 0,
-    
+
     // ── NEW: Shield ability (Juggernaut) ─
     shieldMax: def.shieldMax || 0,
     shieldCurrent: def.shieldMax || 0,
@@ -79,41 +79,44 @@ export function createEnemy(type, hpScale = 1, speedScale = 1) {
     shieldRegenDelay: def.shieldRegenDelay || 0,
     shieldRegenTimer: 0,
     lastDamageTime: 0,
-    
+
     // ── NEW: Summon ability (Necromancer) ─
     summonCount: def.summonCount || 0,
     summonInterval: def.summonInterval || 0,
     summonType: def.summonType || null,
     summonTimer: 0,
     summonedCount: 0,
-    
+
     // ── NEW: Spawn on death (Swarm Queen) ─
     spawnOnDeath: def.spawnOnDeath || 0,
     spawnType: def.spawnType || null,
     spawnRadius: def.spawnRadius || 0,
-    
+
     // ── NEW: Invisible ability (Stalker) ─
     invisible: def.invisible || false,
     revealDistance: def.revealDistance || 100,
-    
+
     // ── NEW: Immunity to status effects (Brute) ─
     immuneTo: def.immuneTo || [],
     armor: def.armor || 0,
-    
+
     // Wave scaling regeneration
-    regenRate:    0,
+    regenRate: 0,
     regenCooldown: 0,
-    
+
     // Status effects
-    slowed:       false,
-    slowAmount:   0,
+    slowed: false,
+    slowAmount: 0,
     slowDuration: 0,
     slowCooldown: 0,
-    poisoned:     false,
+    poisoned: false,
     poisonDamage: 0,
     poisonStacks: 0,
     poisonDuration: 0,
     poisonCooldown: 0,
+    stunned: false,
+    stunDuration: 0,
+    stunCooldown: 0,
   };
 }
 
@@ -129,9 +132,10 @@ export function createEnemy(type, hpScale = 1, speedScale = 1) {
  */
 export function updateEnemies(enemies, dt, particles = null) {
   let moneyEarned = 0;
-  let healthLost  = 0;
+  let healthLost = 0;
   let enemiesKilled = 0;
   let bossesKilled = 0;
+  const deadEnemies = [];
 
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
@@ -148,6 +152,10 @@ export function updateEnemies(enemies, dt, particles = null) {
       moneyEarned += e.reward;
       enemiesKilled += 1;
       if (e.isBoss) bossesKilled += 1;
+
+      // Track dead enemy for combo/kill feed
+      deadEnemies.push({ ...e });
+
       if (particles) {
         emitDeathBurst(particles, e.x, e.y, e.color);
         emitRewardText(particles, e.x, e.y - 20, `+${e.reward}`);
@@ -155,8 +163,14 @@ export function updateEnemies(enemies, dt, particles = null) {
       if (e.spawnOnDeath > 0 && e.spawnType) {
         for (let spawnIndex = 0; spawnIndex < e.spawnOnDeath; spawnIndex++) {
           const child = createEnemy(e.spawnType, 0.4, 1.15);
-          child.x = e.x + Math.cos((spawnIndex / Math.max(1, e.spawnOnDeath)) * Math.PI * 2) * (e.spawnRadius || 24);
-          child.y = e.y + Math.sin((spawnIndex / Math.max(1, e.spawnOnDeath)) * Math.PI * 2) * (e.spawnRadius || 24);
+          child.x =
+            e.x +
+            Math.cos((spawnIndex / Math.max(1, e.spawnOnDeath)) * Math.PI * 2) *
+              (e.spawnRadius || 24);
+          child.y =
+            e.y +
+            Math.sin((spawnIndex / Math.max(1, e.spawnOnDeath)) * Math.PI * 2) *
+              (e.spawnRadius || 24);
           enemies.push(child);
         }
       }
@@ -175,7 +189,7 @@ export function updateEnemies(enemies, dt, particles = null) {
     moveEnemyAlongPath(e, dt);
   }
 
-  return { moneyEarned, healthLost, enemiesKilled, bossesKilled };
+  return { moneyEarned, healthLost, enemiesKilled, bossesKilled, deadEnemies };
 }
 
 // ── Status Effects ───────────────────────────────────────────
@@ -183,6 +197,23 @@ export function updateEnemies(enemies, dt, particles = null) {
  * Process slow and poison effects on enemy.
  */
 function processStatusEffects(enemy, dt) {
+  // Handle stun effect - enemy cannot move while stunned
+  if (enemy.stunned) {
+    enemy.stunCooldown -= dt;
+    if (enemy.stunCooldown <= 0) {
+      enemy.stunned = false;
+    }
+    return; // Skip movement and other effects while stunned
+  }
+
+  // Handle frozen effect - enemy cannot move while frozen
+  const now = performance.now() / 1000;
+  if (enemy._frozenUntil && now < enemy._frozenUntil) {
+    return; // Skip movement and other effects while frozen
+  } else if (enemy._frozenUntil && now >= enemy._frozenUntil) {
+    delete enemy._frozenUntil;
+  }
+
   // Handle slow effect - Brute immune to slow
   if (enemy.slowed) {
     if (enemy.immuneTo && enemy.immuneTo.includes('slow')) {
@@ -218,7 +249,7 @@ function processStatusEffects(enemy, dt) {
       }
     }
   }
-  
+
   // Handle Juggernaut shield regeneration
   if (enemy.shieldMax && enemy.shieldMax > 0) {
     enemy.shieldRegenTimer -= dt;
@@ -258,7 +289,7 @@ function processEnemyAbilities(enemy, enemies, dt) {
       enemy.healCooldown = enemy.healInterval;
     }
   }
-  
+
   // Heal aura ability (Combat Medic)
   if (enemy.ability === 'heal_aura') {
     enemy.healCooldown -= dt;
@@ -273,7 +304,7 @@ function processEnemyAbilities(enemy, enemies, dt) {
       enemy.healCooldown = enemy.healInterval || 1.0;
     }
   }
-  
+
   // Phase shift ability
   if (enemy.ability === 'phase_shift') {
     if (enemy.isPhased) {
@@ -292,7 +323,7 @@ function processEnemyAbilities(enemy, enemies, dt) {
       }
     }
   }
-  
+
   // Teleport ability
   if (enemy.ability === 'teleport') {
     enemy.teleportTimer = (enemy.teleportTimer || 0) + dt;
@@ -313,7 +344,7 @@ function processEnemyAbilities(enemy, enemies, dt) {
       }
     }
   }
-  
+
   // Summon ability (Necromancer)
   if (enemy.ability === 'summon') {
     enemy.summonTimer = (enemy.summonTimer || 0) + dt;
@@ -341,7 +372,10 @@ function moveEnemyAlongPath(enemy, dt) {
   const dx = target.x - enemy.x;
   const dy = target.y - enemy.y;
   const dist = Math.hypot(dx, dy);
-  const step = enemy.speed * dt;
+
+  // Apply terrain speed modifier (from terrainSystem)
+  const terrainSpeedMult = enemy._terrainSpeedMultiplier || 1.0;
+  const step = enemy.speed * dt * terrainSpeedMult;
 
   if (dist <= step) {
     // Snap to waypoint and advance
@@ -359,7 +393,7 @@ function moveEnemyAlongPath(enemy, dt) {
     enemy.x += (dx / dist) * step;
     enemy.y += (dy / dist) * step;
   }
-  
+
   // Track motion trail for fast enemies
   if (enemy.previousPositions) {
     enemy.previousPositions.push({ x: enemy.x, y: enemy.y });
@@ -377,51 +411,55 @@ function moveEnemyAlongPath(enemy, dt) {
  * Handles shielded enemies, phase shift, armor, and status immunities.
  */
 export function damageEnemy(enemy, amount) {
+  const originalAmount = amount;
+
   // ── Phase shift check - invulnerable when phased ─
   if (enemy.isPhased) {
-    return; // No damage taken while phased
+    return 0; // No damage taken while phased
   }
-  
+
   // ── Check for shield ability (Juggernaut) ─
   if (enemy.shieldMax && enemy.shieldMax > 0) {
     // Track last damage time for shield regen
     enemy.lastDamageTime = Date.now();
     enemy.shieldRegenTimer = enemy.shieldRegenDelay || 3;
-    
+
     // Shield absorbs damage first
     if (enemy.shieldCurrent > 0) {
       const damageToShield = Math.min(enemy.shieldCurrent, amount);
       enemy.shieldCurrent -= damageToShield;
       amount -= damageToShield;
-      
+
       if (amount <= 0) {
         enemy.lastHitTime = Date.now();
-        return; // All damage absorbed by shield
+        return originalAmount; // Report full damage even if absorbed
       }
     }
   }
-  
+
   // ── Check for shield ability (standard) ─
   if (enemy.ability === 'shield' && enemy.shieldThreshold > 0) {
     const hpPercent = enemy.hp / enemy.maxHp;
     if (hpPercent <= enemy.shieldThreshold) {
-      amount *= (1 - enemy.damageReduction);
+      amount *= 1 - enemy.damageReduction;
     }
   }
-  
+
   // ── Brute armor - reduces all incoming damage ─
   if (enemy.armor && enemy.armor > 0) {
-    amount *= (1 - enemy.armor);
+    amount *= 1 - enemy.armor;
   }
-  
+
   enemy.hp = Math.max(0, enemy.hp - amount);
-  
+
   // Track last hit time for damage flash effect
   enemy.lastHitTime = Date.now();
-  
+
   if (enemy.hp <= 0) {
     enemy.dead = true;
   }
+
+  return amount;
 }
 
 /**
@@ -466,7 +504,7 @@ export function poisonEnemy(enemy, damage, duration, maxStacks = 3) {
     enemy.poisonCooldown = 1;
     return;
   }
-  
+
   enemy.poisoned = true;
   enemy.poisonDamage = damage;
   enemy.poisonStacks = Math.min(enemy.poisonStacks + 1, maxStacks);
@@ -475,11 +513,24 @@ export function poisonEnemy(enemy, damage, duration, maxStacks = 3) {
 }
 
 /**
+ * Apply stun effect to enemy.
+ * Enemy cannot move while stunned.
+ * @param {object} enemy - target enemy
+ * @param {number} duration - duration in seconds
+ */
+export function stunEnemy(enemy, duration) {
+  // Check immunity (if needed in future)
+  enemy.stunned = true;
+  enemy.stunDuration = duration;
+  enemy.stunCooldown = duration;
+}
+
+/**
  * Returns enemies within `radius` pixels of point (x, y).
  * Used by splash projectiles.
  */
 export function getEnemiesInRadius(enemies, x, y, radius) {
-  return enemies.filter(e => {
+  return enemies.filter((e) => {
     if (e.dead || e.reachedEnd) return false;
     const dx = e.x - x;
     const dy = e.y - y;
@@ -491,7 +542,7 @@ export function getEnemiesInRadius(enemies, x, y, radius) {
  * Get all enemies within range of a point (for healing calculation)
  */
 export function getEnemiesInRange(enemies, x, y, radius) {
-  return enemies.filter(e => {
+  return enemies.filter((e) => {
     if (e.dead || e.reachedEnd) return false;
     const dx = e.x - x;
     const dy = e.y - y;

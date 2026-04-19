@@ -5,11 +5,11 @@ import React, { useState } from 'react';
  * Shows contextual hints for first-time players
  * Includes contextual tips based on game state
  */
-export default function TutorialOverlay({ 
-  isOpen, 
+export default function TutorialOverlay({
+  isOpen,
   onComplete,
   currentStep: externalStep = undefined,
-  gameState = null
+  gameState = null,
 }) {
   const [internalStep, setInternalStep] = useState(0);
   const step = externalStep !== undefined ? externalStep : internalStep;
@@ -18,7 +18,7 @@ export default function TutorialOverlay({
   const baseSteps = [
     {
       title: 'Welcome, Commander!',
-      content: 'Your mission: defend the base from waves of enemies. Let\'s get you started.',
+      content: "Your mission: defend the base from waves of enemies. Let's get you started.",
       position: 'center',
     },
     {
@@ -43,7 +43,7 @@ export default function TutorialOverlay({
     },
     {
       title: 'Survive!',
-      content: 'Build wisely, upgrade smartly, and don\'t let enemies reach the exit. Good luck!',
+      content: "Build wisely, upgrade smartly, and don't let enemies reach the exit. Good luck!",
       position: 'center',
     },
   ];
@@ -51,54 +51,54 @@ export default function TutorialOverlay({
   // Contextual tips based on game state
   const getContextualTip = () => {
     if (!gameState) return null;
-    
+
     const { wave, money, towers, lives } = gameState;
-    
+
     // Low money tip
     if (money < 100 && (!towers || towers.length === 0)) {
       return {
         title: '💰 Tight on Gold?',
-        content: 'Start with a basic tower - it\'s cheap and effective against early enemies.',
-        position: 'bottom'
+        content: "Start with a basic tower - it's cheap and effective against early enemies.",
+        position: 'bottom',
       };
     }
-    
-    // Low lives warning
+
     if (lives <= 3) {
       return {
         title: '⚠️ Base Under Attack!',
-        content: 'Your lives are running low. Focus on upgrading existing towers or place more defenders!',
-        position: 'bottom'
+        content:
+          'Your lives are running low. Focus on upgrading existing towers or place more defenders!',
+        position: 'bottom',
       };
     }
-    
+
     // Wave 5+ tip - introduce synergies
     if (wave >= 5 && wave < 10) {
       return {
         title: '🔗 Tower Synergies',
         content: 'Place different tower types near each other to activate bonus effects!',
-        position: 'right'
+        position: 'right',
       };
     }
-    
-    // Wave 10+ boss warning
+
     if (wave % 6 === 0 && wave > 0) {
       return {
         title: '👹 Boss Wave!',
-        content: 'Bosses are tougher! Make sure your towers are upgraded and consider using splash damage towers.',
-        position: 'center'
+        content:
+          'Bosses are tougher! Make sure your towers are upgraded and consider using splash damage towers.',
+        position: 'center',
       };
     }
-    
+
     // No towers placed
     if (wave > 0 && (!towers || towers.length === 0)) {
       return {
         title: '🎯 No Towers?',
         content: 'You need towers to defend! Place at least one before starting the next wave.',
-        position: 'bottom'
+        position: 'bottom',
       };
     }
-    
+
     return null;
   };
 
@@ -177,7 +177,14 @@ export default function TutorialOverlay({
         </h2>
 
         {/* Content */}
-        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
+        <p
+          style={{
+            color: 'rgba(255,255,255,0.7)',
+            fontSize: 14,
+            lineHeight: 1.6,
+            marginBottom: 24,
+          }}
+        >
           {currentStepData.content}
         </p>
 

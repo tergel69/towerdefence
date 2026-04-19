@@ -13,7 +13,14 @@ export default function WavePreview({ waveNumber, entries = [], bonusGold = 0, v
         boxShadow: '0 18px 40px rgba(0,0,0,0.25)',
       }}
     >
-      <div style={{ fontSize: 10, letterSpacing: '0.16em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>
+      <div
+        style={{
+          fontSize: 10,
+          letterSpacing: '0.16em',
+          color: 'rgba(255,255,255,0.45)',
+          textTransform: 'uppercase',
+        }}
+      >
         Wave Preview
       </div>
       <div style={{ marginTop: 6, fontSize: 15, fontWeight: 700, color: '#f8fafc' }}>
@@ -24,7 +31,9 @@ export default function WavePreview({ waveNumber, entries = [], bonusGold = 0, v
       </div>
       <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
         {entries.length === 0 ? (
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>No enemies previewed yet.</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+            No enemies previewed yet.
+          </div>
         ) : (
           entries.map((entry) => (
             <div

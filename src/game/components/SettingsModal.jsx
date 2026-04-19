@@ -24,12 +24,12 @@ export default function SettingsModal({ isOpen, onClose, onApplySettings = null 
   const handleVolumeChange = (type, value) => {
     const newValue = parseFloat(value);
     settings[type] = newValue;
-    
+
     // Apply to audio system
     if (type === 'masterVolume') setMasterVolume(newValue);
     if (type === 'musicVolume') setMusicVolume(newValue);
     if (type === 'sfxVolume') setSfxVolume(newValue);
-    
+
     saveSettings(settings);
     if (onApplySettings) onApplySettings(settings);
   };
@@ -41,15 +41,21 @@ export default function SettingsModal({ isOpen, onClose, onApplySettings = null 
   };
 
   const handleClearData = () => {
-    if (window.confirm('⚠️ This will delete ALL your progress, stats, and achievements. Are you sure?')) {
+    if (
+      // eslint-disable-next-line no-alert
+      window.confirm(
+        '⚠️ This will delete ALL your progress, stats, and achievements. Are you sure?'
+      )
+    ) {
       clearAllData();
+      // eslint-disable-next-line no-alert
       alert('All data cleared. Refresh to see changes.');
     }
   };
 
   // Calculate total achievement progress
   const totalAchievements = Object.keys(achievementList).length;
-  const unlockedAchievements = Object.values(achievements).filter(a => a.unlocked).length;
+  const unlockedAchievements = Object.values(achievements).filter((a) => a.unlocked).length;
 
   return (
     <div
@@ -166,6 +172,43 @@ export default function SettingsModal({ isOpen, onClose, onApplySettings = null 
           />
         </Section>
 
+        {/* Accessibility Section */}
+        <Section title="♿ Accessibility">
+          <Toggle
+            label="Colorblind Mode"
+            description="Adjust enemy colors for color vision deficiency"
+            enabled={settings.colorblindMode}
+            onToggle={() => handleToggle('colorblindMode')}
+          />
+          <Toggle
+            label="Reduced Motion"
+            description="Minimize animations and visual effects"
+            enabled={settings.reducedMotion}
+            onToggle={() => handleToggle('reducedMotion')}
+          />
+          <SelectOption
+            label="Text Size"
+            description="Adjust UI text size"
+            value={settings.textSize || 'medium'}
+            options={[
+              { value: 'small', label: 'Small' },
+              { value: 'medium', label: 'Medium (Default)' },
+              { value: 'large', label: 'Large' },
+            ]}
+            onChange={(v) => {
+              settings.textSize = v;
+              saveSettings(settings);
+              if (onApplySettings) onApplySettings(settings);
+            }}
+          />
+          <Toggle
+            label="High Contrast Mode"
+            description="Enhance color contrast for better visibility"
+            enabled={settings.highContrast}
+            onToggle={() => handleToggle('highContrast')}
+          />
+        </Section>
+
         {/* Stats Section */}
         <Section title="📊 Statistics">
           <div
@@ -215,8 +258,12 @@ export default function SettingsModal({ isOpen, onClose, onApplySettings = null 
                     width: 28,
                     height: 28,
                     borderRadius: 6,
-                    background: userAch?.unlocked ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.05)',
-                    border: userAch?.unlocked ? '1px solid #fbbf24' : '1px solid rgba(255,255,255,0.1)',
+                    background: userAch?.unlocked
+                      ? 'rgba(251,191,36,0.2)'
+                      : 'rgba(255,255,255,0.05)',
+                    border: userAch?.unlocked
+                      ? '1px solid #fbbf24'
+                      : '1px solid rgba(255,255,255,0.1)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -387,6 +434,46 @@ function Stat({ label, value }) {
       <div style={{ fontSize: 14, color: '#4FC3F7', fontWeight: 'bold' }}>
         {value.toLocaleString()}
       </div>
+    </div>
+  );
+}
+
+function SelectOption({ label, description, value, options, onChange }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+        padding: '8px 10px',
+        background: 'rgba(255,255,255,0.03)',
+        borderRadius: 8,
+      }}
+    >
+      <div>
+        <div style={{ fontSize: 13, color: '#e2e8f0' }}>{label}</div>
+        <div style={{ fontSize: 11, color: '#64748b' }}>{description}</div>
+      </div>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          background: 'rgba(255,255,255,0.1)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          borderRadius: 6,
+          color: '#e2e8f0',
+          padding: '4px 8px',
+          fontSize: 12,
+          cursor: 'pointer',
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

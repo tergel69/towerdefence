@@ -18,8 +18,22 @@ export default function AchievementPopup({ achievement, reward = 0, onClose }) {
         boxShadow: '0 20px 50px rgba(0,0,0,0.45)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.16em', color: '#fbbf24', textTransform: 'uppercase' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 10,
+            letterSpacing: '0.16em',
+            color: '#fbbf24',
+            textTransform: 'uppercase',
+          }}
+        >
           Achievement Unlocked
         </div>
         <button
@@ -37,7 +51,14 @@ export default function AchievementPopup({ achievement, reward = 0, onClose }) {
           ×
         </button>
       </div>
-      <div style={{ marginTop: 10, display: 'flex', gap: 12, alignItems: 'center' }}>
+      <div
+        style={{
+          marginTop: 10,
+          display: 'flex',
+          gap: 12,
+          alignItems: 'center',
+        }}
+      >
         <div
           style={{
             width: 44,
@@ -54,12 +75,25 @@ export default function AchievementPopup({ achievement, reward = 0, onClose }) {
         </div>
         <div>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{achievement.name}</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 4 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: 'rgba(255,255,255,0.65)',
+              marginTop: 4,
+            }}
+          >
             {achievement.description}
           </div>
         </div>
       </div>
-      <div style={{ marginTop: 12, fontSize: 12, color: '#fbbf24', fontWeight: 700 }}>
+      <div
+        style={{
+          marginTop: 12,
+          fontSize: 12,
+          color: '#fbbf24',
+          fontWeight: 700,
+        }}
+      >
         +{reward} gold
       </div>
     </div>

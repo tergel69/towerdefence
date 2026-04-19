@@ -17,7 +17,13 @@ function PathCanvas({ waypoints, pathColor = '#c8a96e', size = 200 }) {
     <svg width={size} height={size} className="path-canvas" role="img" aria-label="Map preview">
       <defs>
         <pattern id={gridId} width={tileSize} height={tileSize} patternUnits="userSpaceOnUse">
-          <rect width={tileSize} height={tileSize} fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+          <rect
+            width={tileSize}
+            height={tileSize}
+            fill="transparent"
+            stroke="rgba(255,255,255,0.1)"
+            strokeWidth="0.5"
+          />
         </pattern>
       </defs>
       <rect width={size} height={size} fill={`url(#${gridId})`} />
@@ -81,9 +87,7 @@ function MapCard({ worldId, onSelectLevel }) {
 
       <div className="map-preview-container">
         <PathCanvas waypoints={pathWaypoints} pathColor={world.colors?.path || '#c8a96e'} />
-        <div className="path-info-overlay">
-          <span className="path-type">{pathType}</span>
-        </div>
+        <span className="path-type">{pathType}</span>
       </div>
 
       <div className="map-stats">
@@ -104,8 +108,12 @@ function MapCard({ worldId, onSelectLevel }) {
       <div className="strategy-hints">
         <h4>Strategy Hints</h4>
         <ul>
-          <li><strong>Recommended:</strong> {pathMeta.idealTowers?.join(', ') || 'basic'}</li>
-          <li><strong>Difficulty:</strong> {pathMeta.difficulty || 'medium'}</li>
+          <li>
+            <strong>Recommended:</strong> {pathMeta.idealTowers?.join(', ') || 'basic'}
+          </li>
+          <li>
+            <strong>Difficulty:</strong> {pathMeta.difficulty || 'medium'}
+          </li>
           <li>{pathMeta.description || 'Standard path'}</li>
         </ul>
       </div>
@@ -114,7 +122,9 @@ function MapCard({ worldId, onSelectLevel }) {
         <h4>Best Towers</h4>
         <div className="tower-tags">
           {availableTowers.map((tower) => (
-            <span key={tower} className="tower-tag">{tower}</span>
+            <span key={tower} className="tower-tag">
+              {tower}
+            </span>
           ))}
         </div>
       </div>
@@ -135,7 +145,9 @@ function MapCard({ worldId, onSelectLevel }) {
                 disabled={!isUnlocked}
               >
                 {levelNum}
-                {levelStatus?.completed && <span className="stars">{'⭐'.repeat(levelStatus.stars)}</span>}
+                {levelStatus?.completed && (
+                  <span className="stars">{'⭐'.repeat(levelStatus.stars)}</span>
+                )}
               </button>
             );
           })}
@@ -157,11 +169,7 @@ export default function CampaignMapSelector({ onSelectLevel }) {
 
       <div className="maps-grid">
         {worldIds.map((worldId) => (
-          <MapCard
-            key={worldId}
-            worldId={worldId}
-            onSelectLevel={onSelectLevel}
-          />
+          <MapCard key={worldId} worldId={worldId} onSelectLevel={onSelectLevel} />
         ))}
       </div>
     </div>

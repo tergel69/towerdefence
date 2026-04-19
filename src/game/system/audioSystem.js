@@ -23,19 +23,20 @@ let _musicGain = null;
  */
 export function initAudio() {
   if (_initialized) return;
-  
+
   try {
     _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     _initialized = true;
-    
+
     // Create music gain node
     _musicGain = _audioCtx.createGain();
     _musicGain.connect(_audioCtx.destination);
     _musicGain.gain.value = _musicVolume * _masterVolume;
-    
+
+    // eslint-disable-next-line no-console
     console.log('Audio system initialized');
   } catch (e) {
-    console.warn('Web Audio API not supported:', e);
+    // eslint-disable-next-line no-console
   }
 }
 
@@ -67,9 +68,33 @@ export function setSfxVolume(value) {
   _sfxVolume = Math.max(0, Math.min(1, value));
 }
 
-export function getMasterVolume() { return _masterVolume; }
-export function getMusicVolume() { return _musicVolume; }
-export function getSfxVolume() { return _sfxVolume; }
+export function getMasterVolume() {
+  return _masterVolume;
+}
+export function getMusicVolume() {
+  return _musicVolume;
+}
+export function getSfxVolume() {
+  return _sfxVolume;
+}
+
+/**
+ * Adjust music intensity dynamically based on game state.
+ * @param {'intense'|'normal'|'quiet'} intensity
+ */
+export function setMusicIntensity(intensity) {
+  const intensityMap = {
+    intense: 0.9,
+    normal: 0.5,
+    quiet: 0.2,
+  };
+  const targetVolume = intensityMap[intensity] || intensityMap.normal;
+  if (_musicGain) {
+    // Smooth transition over 0.5s
+    const now = _audioCtx?.currentTime || 0;
+    _musicGain.gain.setTargetAtTime(targetVolume * _masterVolume, now, 0.3);
+  }
+}
 
 // ── Sound Effects ───────────────────────────────────────────
 /**
@@ -78,12 +103,12 @@ export function getSfxVolume() { return _sfxVolume; }
  */
 export function playSfx(type, options = {}) {
   if (!_initialized || !_audioCtx || _sfxVolume === 0) return;
-  
+
   const now = _audioCtx.currentTime;
   const gain = _audioCtx.createGain();
   gain.connect(_audioCtx.destination);
   gain.gain.value = _sfxVolume * _masterVolume * (options.volume || 1);
-  
+
   switch (type) {
     case 'tower_place':
       playTowerPlace(gain, now);
@@ -122,7 +147,6 @@ export function playSfx(type, options = {}) {
       playBossAppear(gain, now);
       break;
     default:
-      console.warn('Unknown sfx type:', type);
   }
 }
 
@@ -133,10 +157,10 @@ function playTowerPlace(gain, time) {
   osc.type = 'sine';
   osc.frequency.setValueAtTime(220, time);
   osc.frequency.exponentialRampToValueAtTime(80, time + 0.1);
-  
+
   gain.gain.setValueAtTime(1, time);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
-  
+
   osc.connect(gain);
   osc.start(time);
   osc.stop(time + 0.15);
@@ -148,10 +172,10 @@ function playTowerFire(gain, time) {
   osc.type = 'square';
   osc.frequency.setValueAtTime(800, time);
   osc.frequency.exponentialRampToValueAtTime(200, time + 0.08);
-  
+
   gain.gain.setValueAtTime(0.3, time);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
-  
+
   osc.connect(gain);
   osc.start(time);
   osc.stop(time + 0.1);
@@ -163,10 +187,10 @@ function playEnemyDeath(gain, time) {
   osc.type = 'sawtooth';
   osc.frequency.setValueAtTime(400, time);
   osc.frequency.exponentialRampToValueAtTime(50, time + 0.15);
-  
+
   gain.gain.setValueAtTime(0.8, time);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
-  
+
   osc.connect(gain);
   osc.start(time);
   osc.stop(time + 0.2);
@@ -178,10 +202,10 @@ function playEnemyHit(gain, time) {
   osc.type = 'sine';
   osc.frequency.setValueAtTime(600, time);
   osc.frequency.setValueAtTime(400, time + 0.02);
-  
+
   gain.gain.setValueAtTime(0.4, time);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
-  
+
   osc.connect(gain);
   osc.start(time);
   osc.stop(time + 0.05);
@@ -193,11 +217,11 @@ function playWaveStart(gain, time) {
   osc.type = 'sine';
   osc.frequency.setValueAtTime(200, time);
   osc.frequency.exponentialRampToValueAtTime(600, time + 0.3);
-  
+
   gain.gain.setValueAtTime(0.5, time);
   gain.gain.setValueAtTime(0.5, time + 0.25);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 0.4);
-  
+
   osc.connect(gain);
   osc.start(time);
   osc.stop(time + 0.4);
@@ -206,17 +230,17 @@ function playWaveStart(gain, time) {
 function playWaveComplete(gain, time) {
   // Victory "ding" arpeggio
   const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
-  
+
   notes.forEach((freq, i) => {
     const osc = _audioCtx.createOscillator();
     osc.type = 'sine';
     osc.frequency.value = freq;
-    
+
     const noteGain = _audioCtx.createGain();
     noteGain.gain.setValueAtTime(0, time + i * 0.1);
     noteGain.gain.linearRampToValueAtTime(0.3, time + i * 0.1 + 0.02);
     noteGain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.1 + 0.3);
-    
+
     osc.connect(noteGain);
     noteGain.connect(gain);
     osc.start(time + i * 0.1);
@@ -228,18 +252,18 @@ function playUpgrade(gain, time) {
   // Shimmering "shing" - upgrade success
   const osc1 = _audioCtx.createOscillator();
   const osc2 = _audioCtx.createOscillator();
-  
+
   osc1.type = 'sine';
   osc2.type = 'sine';
-  
+
   osc1.frequency.setValueAtTime(800, time);
   osc1.frequency.exponentialRampToValueAtTime(1200, time + 0.1);
   osc2.frequency.setValueAtTime(1000, time);
   osc2.frequency.exponentialRampToValueAtTime(1500, time + 0.1);
-  
+
   gain.gain.setValueAtTime(0.3, time);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
-  
+
   osc1.connect(gain);
   osc2.connect(gain);
   osc1.start(time);
@@ -254,15 +278,15 @@ function playSell(gain, time) {
   osc.type = 'sawtooth';
   osc.frequency.setValueAtTime(400, time);
   osc.frequency.exponentialRampToValueAtTime(100, time + 0.15);
-  
+
   // Add filter for softer sound
   const filter = _audioCtx.createBiquadFilter();
   filter.type = 'lowpass';
   filter.frequency.value = 800;
-  
+
   gain.gain.setValueAtTime(0.4, time);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
-  
+
   osc.connect(filter);
   filter.connect(gain);
   osc.start(time);
@@ -270,15 +294,14 @@ function playSell(gain, time) {
 }
 
 function playError(gain, time) {
-  // Low buzz - error/invalid action
   const osc = _audioCtx.createOscillator();
   osc.type = 'square';
   osc.frequency.value = 150;
-  
+
   gain.gain.setValueAtTime(0.3, time);
   gain.gain.setValueAtTime(0.3, time + 0.1);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
-  
+
   osc.connect(gain);
   osc.start(time);
   osc.stop(time + 0.15);
@@ -289,10 +312,10 @@ function playButtonClick(gain, time) {
   const osc = _audioCtx.createOscillator();
   osc.type = 'sine';
   osc.frequency.value = 1000;
-  
+
   gain.gain.setValueAtTime(0.2, time);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 0.02);
-  
+
   osc.connect(gain);
   osc.start(time);
   osc.stop(time + 0.02);
@@ -304,10 +327,10 @@ function playHeal(gain, time) {
   osc.type = 'sine';
   osc.frequency.setValueAtTime(880, time); // A5
   osc.frequency.setValueAtTime(1100, time + 0.1); // C6
-  
+
   gain.gain.setValueAtTime(0.3, time);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
-  
+
   osc.connect(gain);
   osc.start(time);
   osc.stop(time + 0.2);
@@ -317,23 +340,23 @@ function playBossAppear(gain, time) {
   // Deep ominous rumble - boss appears
   const osc1 = _audioCtx.createOscillator();
   const osc2 = _audioCtx.createOscillator();
-  
+
   osc1.type = 'sine';
   osc2.type = 'sawtooth';
-  
+
   osc1.frequency.setValueAtTime(60, time);
   osc1.frequency.exponentialRampToValueAtTime(30, time + 1);
   osc2.frequency.setValueAtTime(80, time);
   osc2.frequency.exponentialRampToValueAtTime(40, time + 1);
-  
+
   // Heavy distortion
   const dist = _audioCtx.createWaveShaper();
   dist.curve = makeDistortionCurve(50);
-  
+
   gain.gain.setValueAtTime(0.6, time);
   gain.gain.linearRampToValueAtTime(0.4, time + 0.5);
   gain.gain.exponentialRampToValueAtTime(0.01, time + 1.2);
-  
+
   osc1.connect(dist);
   osc2.connect(dist);
   dist.connect(gain);
@@ -348,12 +371,12 @@ function makeDistortionCurve(amount) {
   const samples = 44100;
   const curve = new Float32Array(samples);
   const deg = Math.PI / 180;
-  
+
   for (let i = 0; i < samples; i++) {
     const x = (i * 2) / samples - 1;
     curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
   }
-  
+
   return curve;
 }
 
@@ -364,12 +387,12 @@ function makeDistortionCurve(amount) {
  */
 export function startMusic(type = 'action') {
   if (!_initialized || !_audioCtx) return;
-  
+
   // Stop current music
   if (_currentMusic) {
     _currentMusic.stop();
   }
-  
+
   // Create a simple looping pattern
   // In production, you'd load actual music files
   _currentMusic = createMusicLoop(type);
@@ -392,27 +415,27 @@ export function stopMusic() {
 function createMusicLoop(type) {
   // Simple bass drone + rhythm pattern
   const now = _audioCtx.currentTime;
-  
+
   // Master gain for music
   const musicMaster = _audioCtx.createGain();
   musicMaster.gain.value = 0.3;
-  
+
   // Bass oscillator
   const bass = _audioCtx.createOscillator();
   bass.type = 'sine';
   bass.frequency.value = type === 'action' ? 55 : 40; // A1 or E1
-  
+
   const bassGain = _audioCtx.createGain();
   bassGain.gain.value = 0.4;
-  
+
   // Simple pattern using scheduled notes
   // In production, this would be replaced with actual music files
   bass.connect(bassGain);
   bassGain.connect(musicMaster);
-  
+
   // Loop the music (in production, load actual audio file)
   bass.start(now);
-  
+
   // Create a simple envelope for looping feel
   const lfo = _audioCtx.createOscillator();
   lfo.frequency.value = 0.5; // Every 2 seconds
@@ -426,13 +449,27 @@ function createMusicLoop(type) {
     output: musicMaster,
     start() {},
     stop() {
-      try { bass.stop(); } catch {}
-      try { lfo.stop(); } catch {}
-      try { bass.disconnect(); } catch {}
-      try { lfo.disconnect(); } catch {}
-      try { bassGain.disconnect(); } catch {}
-      try { lfoGain.disconnect(); } catch {}
-      try { musicMaster.disconnect(); } catch {}
+      try {
+        bass.stop();
+      } catch {}
+      try {
+        lfo.stop();
+      } catch {}
+      try {
+        bass.disconnect();
+      } catch {}
+      try {
+        lfo.disconnect();
+      } catch {}
+      try {
+        bassGain.disconnect();
+      } catch {}
+      try {
+        lfoGain.disconnect();
+      } catch {}
+      try {
+        musicMaster.disconnect();
+      } catch {}
     },
   };
 }

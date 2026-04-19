@@ -1,18 +1,56 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+
+/**
+ * @typedef {Object} ResultsScreenProps
+ * @property {boolean} isOpen
+ * @property {boolean} isVictory
+ * @property {Object|null} stats
+ * @property {Function} onPlayAgain
+ * @property {Function} onMainMenu
+ * @property {Function|null} [onShare]
+ * @property {string} [playerName]
+ * @property {((name: string) => void)|null} [onPlayerNameChange]
+ */
 
 /**
  * Results Screen Component
  * Shows after game over or victory with stats summary
+ * @param {ResultsScreenProps} props
  */
-export default function ResultsScreen({ 
-  isOpen, 
+export default function ResultsScreen({
+  isOpen,
   isVictory,
   stats,
   onPlayAgain,
   onMainMenu,
-  onShare = null 
+  onShare = null,
+  playerName = '',
+  onPlayerNameChange = null,
 }) {
+  const [nameInput, setNameInput] = useState(playerName);
+
+  useEffect(() => {
+    setNameInput(playerName);
+  }, [playerName]);
+
   if (!isOpen) return null;
+
+  const handleNameSubmit = () => {
+    const trimmed = nameInput.trim().slice(0, 20);
+    if (trimmed && onPlayerNameChange) {
+      onPlayerNameChange(trimmed);
+    }
+  };
+
+  const handlePlayAgainWithSave = () => {
+    handleNameSubmit();
+    onPlayAgain();
+  };
+
+  const handleMainMenuWithSave = () => {
+    handleNameSubmit();
+    onMainMenu();
+  };
 
   return (
     <div
@@ -50,12 +88,89 @@ export default function ResultsScreen({
         >
           {isVictory ? '🎉 VICTORY!' : '💀 GAME OVER'}
         </div>
-        
+
         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 24 }}>
-          {isVictory 
-            ? 'You defended the base! All waves cleared.' 
+          {isVictory
+            ? 'You defended the base! All waves cleared.'
             : 'The enemies broke through your defenses.'}
         </div>
+
+        {/* Username Input for Leaderboard */}
+        {onPlayerNameChange && (
+          <div style={{ marginBottom: 24 }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 12,
+                color: 'rgba(255,255,255,0.6)',
+                marginBottom: 6,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+              }}
+            >
+              Your Name (for Leaderboard)
+            </label>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleNameSubmit();
+                }}
+                placeholder="Enter your name..."
+                maxLength={20}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  background: 'rgba(255,255,255,0.05)',
+                  color: '#fff',
+                  fontSize: 14,
+                  outline: 'none',
+                  width: 200,
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'rgba(74,222,128,0.5)';
+                  e.target.style.boxShadow = '0 0 12px rgba(74,222,128,0.15)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(255,255,255,0.2)';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+              <button
+                onClick={handleNameSubmit}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: nameInput.trim()
+                    ? 'linear-gradient(135deg, #16a34a, #22c55e)'
+                    : 'rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  opacity: nameInput.trim() ? 1 : 0.5,
+                }}
+              >
+                Save
+              </button>
+            </div>
+            {nameInput.trim() && (
+              <div
+                style={{
+                  marginTop: 6,
+                  fontSize: 11,
+                  color: 'rgba(74,222,128,0.7)',
+                }}
+              >
+                Playing as: {nameInput.trim()}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div
@@ -77,7 +192,7 @@ export default function ResultsScreen({
         {/* Action Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button
-            onClick={onPlayAgain}
+            onClick={handlePlayAgainWithSave}
             style={{
               padding: '14px 24px',
               borderRadius: 10,
@@ -89,11 +204,11 @@ export default function ResultsScreen({
               fontWeight: 700,
             }}
           >
-            🔄 Play Again
+            Play Again
           </button>
 
           <button
-            onClick={onMainMenu}
+            onClick={handleMainMenuWithSave}
             style={{
               padding: '12px 24px',
               borderRadius: 10,
@@ -104,7 +219,7 @@ export default function ResultsScreen({
               fontSize: 14,
             }}
           >
-            🏠 Main Menu
+            Main Menu
           </button>
         </div>
       </div>
@@ -124,7 +239,14 @@ function StatBox({ label, value, color }) {
       <div style={{ fontSize: 22, fontWeight: 700, color, marginBottom: 4 }}>
         {typeof value === 'number' ? value.toLocaleString() : value}
       </div>
-      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div
+        style={{
+          fontSize: 10,
+          color: 'rgba(255,255,255,0.4)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+        }}
+      >
         {label}
       </div>
     </div>

@@ -14,7 +14,7 @@ import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../constants';
  */
 export function useCanvas() {
   const canvasRef = useRef(null);
-  const ctxRef    = useRef(null);
+  const ctxRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -23,12 +23,13 @@ export function useCanvas() {
     const dpr = window.devicePixelRatio || 1;
 
     // Physical pixel size
-    canvas.width  = CANVAS_WIDTH  * dpr;
+    canvas.width = CANVAS_WIDTH * dpr;
     canvas.height = CANVAS_HEIGHT * dpr;
 
-    // CSS display size stays the same
-    canvas.style.width  = `${CANVAS_WIDTH}px`;
-    canvas.style.height = `${CANVAS_HEIGHT}px`;
+    // CSS display size scaled up for retro pixelated look
+    const scale = 1.5;
+    canvas.style.width = `${CANVAS_WIDTH * scale}px`;
+    canvas.style.height = `${CANVAS_HEIGHT * scale}px`;
 
     if (process.env.NODE_ENV === 'test') return;
 

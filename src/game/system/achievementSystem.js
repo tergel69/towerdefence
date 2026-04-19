@@ -1,10 +1,17 @@
-import { checkAndUnlockAchievements, getAchievementList, getAchievements, claimAchievementReward } from './saveSystem';
+import {
+  checkAndUnlockAchievements,
+  getAchievementList,
+  getAchievements,
+  claimAchievementReward,
+} from './saveSystem';
 
 export function evaluateAchievements(stats, currentGold) {
   const before = getAchievements();
   const result = checkAndUnlockAchievements(stats, currentGold);
   const after = result.achievements || getAchievements();
-  const unlocked = Object.values(after).filter((achievement) => achievement.unlocked && !before[achievement.id]?.unlocked);
+  const unlocked = Object.values(after).filter(
+    (achievement) => achievement.unlocked && !before[achievement.id]?.unlocked
+  );
 
   return {
     ...result,

@@ -12,12 +12,14 @@ import { useEffect, useRef, useCallback } from 'react';
  * @param {boolean}              running - when false the loop is suspended
  */
 export function useGameLoop(onTick, running) {
-  const rafRef      = useRef(null);
+  const rafRef = useRef(null);
   const lastTimeRef = useRef(null);
-  const onTickRef   = useRef(onTick);
+  const onTickRef = useRef(onTick);
 
   // Keep the callback ref fresh without restarting the loop
-  useEffect(() => { onTickRef.current = onTick; }, [onTick]);
+  useEffect(() => {
+    onTickRef.current = onTick;
+  }, [onTick]);
 
   const loop = useCallback((timestamp) => {
     if (lastTimeRef.current === null) {
@@ -26,7 +28,7 @@ export function useGameLoop(onTick, running) {
 
     // Cap dt at 100ms to prevent spiral-of-death on tab switch / freeze
     const rawDt = (timestamp - lastTimeRef.current) / 1000;
-    const dt    = Math.min(rawDt, 0.1);
+    const dt = Math.min(rawDt, 0.1);
     lastTimeRef.current = timestamp;
 
     onTickRef.current(dt);

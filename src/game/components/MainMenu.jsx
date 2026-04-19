@@ -1,23 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { loadProgression } from '../system/saveSystem';
 import ChallengeCard from './ChallengeCard';
 import LeaderboardPanel from './LeaderboardPanel';
+import MetaUpgradePanel from './MetaUpgradePanel';
+import DifficultySelector from './DifficultySelector';
 
 /**
  * Animated Button Component
- * Features: hover scale, press feedback, glow effects
+ * Features: hover scale, press feedback, ripple effect, breathing animation, glow effects
  */
-function AnimatedButton({ 
-  children, 
-  onClick, 
+function AnimatedButton({
+  children,
+  onClick,
   variant = 'primary',
   size = 'large',
   disabled = false,
   icon,
-  style = {} 
+  style = {},
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+  const [ripples, setRipples] = useState([]);
+  const [breathPhase, setBreathPhase] = useState(0);
+  const buttonRef = useRef(null);
+  const breathRef = useRef(null);
+
+  // Breathing animation loop for idle state
+  useEffect(() => {
+    if (!isHovered && !isPressed && !disabled) {
+      breathRef.current = setInterval(() => {
+        setBreathPhase((prev) => (prev + 1) % 100);
+      }, 50);
+    } else {
+      if (breathRef.current) {
+        clearInterval(breathRef.current);
+        breathRef.current = null;
+      }
+    }
+    return () => {
+      if (breathRef.current) clearInterval(breathRef.current);
+    };
+  }, [isHovered, isPressed, disabled]);
+
+  // Ripple effect on click
+  const handleClick = (e) => {
+    if (disabled) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const rippleId = Date.now();
+
+    setRipples((prev) => [...prev, { id: rippleId, x, y }]);
+
+    setTimeout(() => {
+      setRipples((prev) => prev.filter((r) => r.id !== rippleId));
+    }, 600);
+
+    onClick?.(e);
+  };
 
   // Variant styles
   const variantStyles = {
@@ -77,13 +118,17 @@ function AnimatedButton({
 
   const v = variantStyles[variant];
   const s = sizes[size];
-  
+
+  // Calculate breathing offset for idle animation
+  const breathScale =
+    isHovered || isPressed || disabled ? 1 : 1 + Math.sin(breathPhase * 0.0628) * 0.01;
+
   // Calculate transform and shadow based on state
   const getTransform = () => {
     if (disabled) return 'scale(1)';
     if (isPressed) return 'scale(0.96)';
-    if (isHovered) return 'scale(1.03)';
-    return 'scale(1)';
+    if (isHovered) return `scale(${1.03 * breathScale})`;
+    return `scale(${breathScale})`;
   };
 
   const getShadow = () => {
@@ -110,7 +155,8 @@ function AnimatedButton({
 
   return (
     <button
-      onClick={disabled ? undefined : onClick}
+      ref={buttonRef}
+      onClick={handleClick}
       onMouseEnter={() => !disabled && setIsHovered(true)}
       onMouseLeave={() => {
         if (disabled) return;
@@ -140,11 +186,48 @@ function AnimatedButton({
         transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
         outline: 'none',
         opacity: disabled ? 0.5 : 1,
+        position: 'relative',
+        overflow: 'hidden',
         userSelect: 'none',
         WebkitTapHighlightColor: 'transparent',
         ...style,
       }}
     >
+      {/* Ripple effects */}
+      {ripples.map((ripple) => (
+        <span
+          key={ripple.id}
+          style={{
+            position: 'absolute',
+            left: ripple.x,
+            top: ripple.y,
+            width: 0,
+            height: 0,
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.4)',
+            transform: 'translate(-50%, -50%)',
+            animation: 'rippleExpand 600ms ease-out forwards',
+            pointerEvents: 'none',
+          }}
+        />
+      ))}
+
+      {/* Inject ripple keyframes */}
+      <style>{`
+        @keyframes rippleExpand {
+          0% {
+            width: 0;
+            height: 0;
+            opacity: 0.5;
+          }
+          100% {
+            width: 300px;
+            height: 300px;
+            opacity: 0;
+          }
+        }
+      `}</style>
+
       {icon && <span style={{ fontSize: size === 'large' ? 18 : 14 }}>{icon}</span>}
       {children}
     </button>
@@ -184,10 +267,10 @@ function AnimatedTitle() {
       >
         Tower Defense
       </h1>
-      <p 
-        style={{ 
-          color: 'rgba(255,255,255,0.55)', 
-          fontSize: 'clamp(14px, 3vw, 18px)', 
+      <p
+        style={{
+          color: 'rgba(255,255,255,0.55)',
+          fontSize: 'clamp(14px, 3vw, 18px)',
           marginTop: 16,
           fontWeight: 400,
           letterSpacing: '0.08em',
@@ -242,21 +325,42 @@ function StatsCard({ stats, totalStars }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', gap: 36, fontSize: 14 }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: '#fbbf24', fontWeight: 700, fontSize: 26, fontFamily: "'Orbitron', sans-serif" }}>
+          <div
+            style={{
+              color: '#fbbf24',
+              fontWeight: 700,
+              fontSize: 26,
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+          >
             {stats.gamesPlayed}
           </div>
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 4 }}>GAMES</div>
         </div>
         <div style={{ width: 1, background: 'rgba(255,255,255,0.1)' }} />
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: 26, fontFamily: "'Orbitron', sans-serif" }}>
+          <div
+            style={{
+              color: '#60a5fa',
+              fontWeight: 700,
+              fontSize: 26,
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+          >
             {stats.totalWavesCompleted}
           </div>
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 4 }}>WAVES</div>
         </div>
         <div style={{ width: 1, background: 'rgba(255,255,255,0.1)' }} />
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: '#f87171', fontWeight: 700, fontSize: 26, fontFamily: "'Orbitron', sans-serif" }}>
+          <div
+            style={{
+              color: '#f87171',
+              fontWeight: 700,
+              fontSize: 26,
+              fontFamily: "'Orbitron', sans-serif",
+            }}
+          >
             {stats.totalEnemiesKilled}
           </div>
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 4 }}>KILLS</div>
@@ -284,10 +388,22 @@ export default function MainMenu({
   onEnterWorldSelect,
   onStartChallenge,
   stats,
+  difficulty = 'normal',
+  onDifficultyChange,
 }) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showMetaUpgrades, setShowMetaUpgrades] = useState(false);
+  const [showDifficultySelector, setShowDifficultySelector] = useState(false);
   const progression = loadProgression();
   const totalStars = progression?.totalStars || 0;
+
+  const handleMetaPurchase = (cost) => {
+    setShowMetaUpgrades(false);
+  };
+
+  const handleDifficultySelect = (newDifficulty) => {
+    onDifficultyChange?.(newDifficulty);
+  };
 
   return (
     <div
@@ -308,82 +424,63 @@ export default function MainMenu({
       <AnimatedTitle />
 
       {/* Two-column layout for buttons */}
-      <div style={{ 
-        display: 'flex', 
-        flexWrap: 'wrap',
-        gap: 16, 
-        maxWidth: 520,
-        width: '100%',
-        justifyContent: 'center',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 16,
+          maxWidth: 520,
+          width: '100%',
+          justifyContent: 'center',
+        }}
+      >
         {/* Primary Actions Column */}
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: 14, 
-          flex: '1 1 220px',
-          maxWidth: 280,
-        }}>
-          <AnimatedButton
-            variant="primary"
-            size="large"
-            onClick={onStartNewGame}
-            icon="🎮"
-          >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+            flex: '1 1 220px',
+            maxWidth: 280,
+          }}
+        >
+          <AnimatedButton variant="primary" size="large" onClick={onStartNewGame} icon="🎮">
             New Game
           </AnimatedButton>
 
           {onStartEndless && (
-            <AnimatedButton
-              variant="endless"
-              size="large"
-              onClick={onStartEndless}
-              icon="∞"
-            >
+            <AnimatedButton variant="endless" size="large" onClick={onStartEndless} icon="∞">
               Endless
             </AnimatedButton>
           )}
 
           {onEnterWorldSelect && (
-            <AnimatedButton
-              variant="campaign"
-              size="large"
-              onClick={onEnterWorldSelect}
-              icon="🗺️"
-            >
+            <AnimatedButton variant="campaign" size="large" onClick={onEnterWorldSelect} icon="🗺️">
               Campaign
             </AnimatedButton>
           )}
 
           {hasSaveGame && (
-            <AnimatedButton
-              variant="continue"
-              size="large"
-              onClick={onContinue}
-              icon="▶️"
-            >
+            <AnimatedButton variant="continue" size="large" onClick={onContinue} icon="▶️">
               Continue
             </AnimatedButton>
           )}
         </div>
 
         {/* Quick Access Column */}
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: 12, 
-          flex: '1 1 180px',
-          maxWidth: 220,
-        }}>
-          <AnimatedButton
-            variant="settings"
-            size="medium"
-            onClick={onOpenSettings}
-            icon="⚙️"
-          >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            flex: '1 1 180px',
+            maxWidth: 220,
+          }}
+        >
+          <AnimatedButton variant="settings" size="medium" onClick={onOpenSettings} icon="⚙️">
             Settings
           </AnimatedButton>
-          
+
           <AnimatedButton
             variant="leaderboard"
             size="medium"
@@ -391,6 +488,24 @@ export default function MainMenu({
             icon="🏆"
           >
             Leaderboard
+          </AnimatedButton>
+
+          <AnimatedButton
+            variant="endless"
+            size="medium"
+            onClick={() => setShowMetaUpgrades(true)}
+            icon="⭐"
+          >
+            Upgrades
+          </AnimatedButton>
+
+          <AnimatedButton
+            variant="campaign"
+            size="medium"
+            onClick={() => setShowDifficultySelector(true)}
+            icon="🎮"
+          >
+            Difficulty
           </AnimatedButton>
         </div>
       </div>
@@ -403,8 +518,24 @@ export default function MainMenu({
       )}
 
       {/* Leaderboard Modal */}
-      {showLeaderboard && (
-        <LeaderboardPanel onClose={() => setShowLeaderboard(false)} />
+      {showLeaderboard && <LeaderboardPanel onClose={() => setShowLeaderboard(false)} />}
+
+      {/* Meta Upgrade Panel */}
+      {showMetaUpgrades && (
+        <MetaUpgradePanel
+          onClose={() => setShowMetaUpgrades(false)}
+          currentGold={stats?.maxGold || 0}
+          onPurchase={handleMetaPurchase}
+        />
+      )}
+
+      {/* Difficulty Selector */}
+      {showDifficultySelector && (
+        <DifficultySelector
+          onSelect={handleDifficultySelect}
+          onClose={() => setShowDifficultySelector(false)}
+          currentDifficulty={difficulty}
+        />
       )}
 
       {/* Stats Card */}
@@ -413,7 +544,9 @@ export default function MainMenu({
       )}
 
       {/* Version */}
-      <div style={{ position: 'absolute', bottom: 16, color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>
+      <div
+        style={{ position: 'absolute', bottom: 16, color: 'rgba(255,255,255,0.2)', fontSize: 11 }}
+      >
         v0.4 | Indie Release
       </div>
     </div>

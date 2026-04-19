@@ -12,7 +12,14 @@ import { TOWER_DEFS } from '../constants';
  *   onSell     — (towerId) => void
  *   onClose    — () => void
  */
-export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onClose }) {
+export default function TowerUpgradePanel({
+  tower,
+  money,
+  onUpgrade,
+  onSell,
+  onClose,
+  onShowBranches,
+}) {
   if (!tower) return null;
 
   const towerType = tower.type || tower.defId;
@@ -20,18 +27,15 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
   if (!def) return null;
 
   const stats = def.levels[tower.level];
-  const upgradeCost = tower.level < def.levels.length - 1 
-    ? def.upgradeCost[tower.level] 
-    : null;
-  
+  const upgradeCost = tower.level < def.levels.length - 1 ? def.upgradeCost[tower.level] : null;
+
   // Calculate sell value: 60% refund of base + upgrades
   const sellValue = (() => {
-    const upgradePaid = tower.level > 0 
-      ? def.upgradeCost.slice(0, tower.level).reduce((a, b) => a + b, 0) 
-      : 0;
+    const upgradePaid =
+      tower.level > 0 ? def.upgradeCost.slice(0, tower.level).reduce((a, b) => a + b, 0) : 0;
     return Math.floor((def.cost + upgradePaid) * 0.6);
   })();
-  
+
   const isMaxLevel = upgradeCost === null;
   const canAfford = upgradeCost !== null && money >= upgradeCost;
 
@@ -56,12 +60,18 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
   // Determine tower icon based on type
   const getTowerIcon = (type) => {
     switch (type) {
-      case 'basic': return '🔫';
-      case 'splash': return '💥';
-      case 'ice': return '❄️';
-      case 'sniper': return '🎯';
-      case 'poison': return '☠️';
-      default: return '🏰';
+      case 'basic':
+        return '🔫';
+      case 'splash':
+        return '💥';
+      case 'ice':
+        return '❄️';
+      case 'sniper':
+        return '🎯';
+      case 'poison':
+        return '☠️';
+      default:
+        return '🏰';
     }
   };
 
@@ -139,7 +149,15 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
 
       {/* Stats */}
       <div style={{ flex: 1, padding: 20, overflowY: 'auto' }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.15em', color: '#64748b', marginBottom: 12, textTransform: 'uppercase' }}>
+        <div
+          style={{
+            fontSize: 10,
+            letterSpacing: '0.15em',
+            color: '#64748b',
+            marginBottom: 12,
+            textTransform: 'uppercase',
+          }}
+        >
           Stats
         </div>
 
@@ -165,7 +183,8 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontWeight: 'bold', fontSize: 14 }}>
-                {stats[key]}{unit}
+                {stats[key]}
+                {unit}
               </span>
               {nextStats && (
                 <span
@@ -184,7 +203,6 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
           </div>
         ))}
 
-        {/* Splash info */}
         {def.splash && stats.splashRadius > 0 && (
           <div
             style={{
@@ -201,7 +219,6 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
           </div>
         )}
 
-        {/* Ice/Slow info */}
         {def.levels[tower.level].slowAmount > 0 && (
           <div
             style={{
@@ -214,11 +231,11 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
               color: '#81D4FA',
             }}
           >
-            ❄️ Slow: {Math.round(def.levels[tower.level].slowAmount * 100)}% for {def.levels[tower.level].slowDuration}s
+            ❄️ Slow: {Math.round(def.levels[tower.level].slowAmount * 100)}% for{' '}
+            {def.levels[tower.level].slowDuration}s
           </div>
         )}
 
-        {/* Poison info */}
         {def.levels[tower.level].poisonDamage > 0 && (
           <div
             style={{
@@ -231,7 +248,8 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
               color: '#86efac',
             }}
           >
-            ☠️ Poison: {def.levels[tower.level].poisonDamage} damage over {def.levels[tower.level].poisonDuration}s
+            ☠️ Poison: {def.levels[tower.level].poisonDamage} damage over{' '}
+            {def.levels[tower.level].poisonDuration}s
           </div>
         )}
 
@@ -250,7 +268,6 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
           {def.description}
         </div>
 
-        {/* Tower info */}
         <div
           style={{
             marginTop: 12,
@@ -300,9 +317,7 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
             }}
           >
             <span>⬆️ Upgrade to Level {tower.level + 2}</span>
-            <span style={{ color: canAfford ? '#fbbf24' : '#64748b' }}>
-              💰 {upgradeCost}g
-            </span>
+            <span style={{ color: canAfford ? '#fbbf24' : '#64748b' }}>💰 {upgradeCost}g</span>
           </button>
         ) : (
           <div
@@ -319,6 +334,40 @@ export default function TowerUpgradePanel({ tower, money, onUpgrade, onSell, onC
           >
             ⭐ MAX LEVEL
           </div>
+        )}
+
+        {/* Branching Upgrades Button */}
+        {def.branches && tower.level >= (def.branchUnlockLevel || 2) - 1 && (
+          <button
+            onClick={() => onShowBranches?.()}
+            style={{
+              background: 'rgba(139, 92, 246, 0.15)',
+              border: '1px solid rgba(139, 92, 246, 0.4)',
+              borderRadius: 8,
+              color: '#a78bfa',
+              padding: '10px',
+              cursor: 'pointer',
+              fontFamily: 'monospace',
+              fontSize: 12,
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              transition: 'all 0.2s',
+              marginTop: '8px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(139, 92, 246, 0.25)';
+              e.currentTarget.style.transform = 'scale(1.02)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <span>🌿 Branch Upgrades</span>
+            <span style={{ color: '#c4b5fd' }}>View →</span>
+          </button>
         )}
 
         {/* Sell button */}
