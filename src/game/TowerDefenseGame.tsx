@@ -682,7 +682,7 @@ export default function TowerDefenseGame() {
   const checkChallengeProgress = useCallback(() => {
     if (gameMode !== 'challenge') return;
     // Challenge progress feedback removed (was console.log only)
-  }, []);
+  }, [gameMode]);
 
   const saveProgress = useCallback(() => {
     saveGameState(stateRef.current);
@@ -1337,6 +1337,11 @@ export default function TowerDefenseGame() {
       selectedLevel,
       selectedWorld,
       gameMode,
+      checkChallengeProgress,
+      currentEventWave,
+      midWaveEventBanner,
+      playerName,
+      validateAndAwardChallenge,
     ]
   );
 
@@ -1500,10 +1505,10 @@ export default function TowerDefenseGame() {
     offscreenLayersRef.current = createOffscreenLayers();
     spatialGridRef.current = createSpatialGrid(GRID_W, GRID_H);
     syncUi();
-  }, [syncUi]);
+  }, [difficulty, syncUi]);
 
   // Commander ability handler (wired to UI when CommanderAbilityBar is added)
-  // eslint-disable-next-line no-unused-vars
+  /* eslint-disable no-unused-vars */
   const _handleCommanderAbility = useCallback((abilityId: string) => {
     const s = stateRef.current;
     const commander = commanderRef.current;
@@ -1524,6 +1529,7 @@ export default function TowerDefenseGame() {
     }
     setKillFeedTick((t) => t + 1);
   }, []);
+  /* eslint-enable no-unused-vars */
 
   const handleUpgrade = useCallback(
     (towerId: number) => {
@@ -1760,7 +1766,7 @@ export default function TowerDefenseGame() {
       saveProgress();
       syncUi();
     },
-    [commitSessionStats, getCanvasPoint, saveProgress, syncPersistentStats, syncUi]
+    [commitSessionStats, getCanvasPoint, gameMode, saveProgress, syncPersistentStats, syncUi]
   );
 
   const handleCanvasMouseMove = useCallback(
